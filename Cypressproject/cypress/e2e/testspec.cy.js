@@ -1,0 +1,18 @@
+describe('My First Test', () => {
+    it('Visits the Kitchen Sink', () => {
+      cy.visit('https://example.cypress.io')
+      cy.contains('type').click()
+      cy.url().should('include', '/commands/actions')
+      cy.get("input[id='email1']").type('test@asd.pl')
+      cy.get('.action-email').should('have.value', 'test@asd.pl')
+      cy.get(".action-form").type('tester')
+      cy.get(".action-form").submit().next().should('contain', 'Your form has been submitted!')
+      cy.get('.action-blur').type('About to blur').blur()
+      .should('have.class', 'error').prev()
+      .should('have.attr', 'style', 'color: red;')
+      cy.get('.action-clear').type('Clear this text')
+  .should('have.value', 'Clear this text')
+  .clear()
+  .should('have.value', '')
+    })
+  })
