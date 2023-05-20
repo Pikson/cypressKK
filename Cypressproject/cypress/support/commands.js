@@ -23,3 +23,20 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+
+import selectors from "./selectors";
+
+// Cypress.Commands.add('clearBasket', () => { 
+//     cy.get(selectors.openBasket).click()
+//     cy.get(selectors.itemQuantity).clear().type('{enter}')
+//     cy.visit('https://www.empik.com/')
+// })
+
+
+Cypress.Commands.add('clearBasket', () => { 
+    cy.get(selectors.openBasket).click()
+    cy.get(selectors.itemQuantity).each(($el) => {
+        cy.wrap($el).clear().type('1', '{enter}')
+    })
+    
+})

@@ -1,3 +1,5 @@
+import selectors from '../../support/selectors.js'
+
 describe('Empik shop test', () => {
 
 
@@ -5,45 +7,65 @@ describe('Empik shop test', () => {
   beforeEach(() => {
     cy.session('accept cookies', () => {
       cy.visit('https://www.empik.com/')
-      cy.get('[data-ta="cookie-btn-accept-all"]').first().click({force: true})
-
-
-      //cy.get('[data-ta="cookie-btn-accept-all"]').first().click({force: true})
-      //cy.contains("button", "Zaakceptuj zgody").click({force: true})
-      //cy.contains("cookie-btn-accept-all", "Zaakceptuj zgody").click({force: true})
+      cy.get(selectors.acceptCookies).first().click({force: true})
     })
+
   })
 
     it('Adds harry potter to the basket', () => {
       cy.visit('https://www.empik.com/')
-      cy.get('.css-ys01em-triggerLayer').click()
+      cy.get(selectors.searchBarTrigger).click()
       cy.contains('form', 'POPULARNE WYSZUKIWANIA')
-      cy.get('[title="Wpisz czego szukasz"]').type('harry potter', {force: true}).type('{enter}')
-      cy.contains('Harry Potter i Kamień Filozoficzny. Tom 1').click()
+      cy.get(selectors.searchBarInput).type('harry potter', {force: true}).type('{enter}')
+      cy.contains('Harry Potter i Zakon Feniksa. Tom 5').click()
       cy.wait(1000)
       cy.contains('button', 'DODAJ DO KOSZYKA').click()
-      cy.get('[data-ta="close-btn"]').click()
+      cy.get(selectors.closeBasketUpdateWindow).click()
     })
 
-    it('Opens basket and tries to buy', () => {
+    it('Open the basket and try to buy without logging in, intercept store list', () => {
       cy.visit('https://www.empik.com/')
-      cy.get('.inlineImage--basket').click()
+      cy.clearBasket()
       cy.wait(1000)
-      cy.get('[data-ta= "proceed-button"]').first().click()
+      cy.get(selectors.proceedToCheckout).first().click()
       cy.contains('ZAMÓW BEZ REJESTRACJI').click()
       cy.get('form').find('[type="email"]').type('pikson420@gmail.com')
       cy.get('form').submit()
-      cy.get('[data-ta="STORE"]').click()
-      cy.intercept("POST", "https://www.empik.com/gateway/api/graphql/cart").as("storeList")
-      cy.get('[data-ta="search-input"]').type('20-246')
-      cy.wait("@storeList")
-      cy.get("@storeList").then(res => {
-        console.log(res)
+      cy.get(selectors.deliveryEmpik).click()
+      cy.intercept("POST", "https://www.empik.com/gateway/api/graphql/cart").as("storesList")
+      cy.get(selectors.storeSearchByPostCode).type('20-246')
+      cy.wait("@storesList")
+      cy.get("@storesList").then(res => {
+        console.log(res)//to sie w ogole nie wyswietla
+        cy.log(res)
+        const requestBody = res.request.body
+        const responseBody = res.response.body
+        const storeFields = res.response.body.data.findDeliveryPointsWithStores.deliveryPoints
+        const expectedData = {
+          postalCode: "20-246"
+        }
+        
         expect(res.response.statusCode).to.equal(200)
+        expect(storeFields[0].name).to.equal("Lublin Olimp (SP)")
+        expect(storeFields[1].name).to.equal("Lublin Vivo (SP)")
+        
+        //expect(requestBody).to.equal(expectedData) nie dziala
+        
+        //expect(res.response.duration).to.be.lessThan(500) 
+
+         // expect(res.response.body["data"]["findDeliveryPointsWithStores"]["deliveryPoints"][0])
+        // .should('include', {'name':'Lublin Olimp (SP)'})
+
+        //expect(res.response.body).its("deliveryPoints").should('include', {
+          //'name':'Lublin Olimp (SP)'})
       })
 
-
+      it('Removes unnecessary copies of the book from the basket', () => {
+        cy.visit('https://www.empik.com/')
+        cy.get(selectors.openBasket).click()
+        cy.get(selectors.itemQuantity).clear().type("1")
+      })
       
     })
     
-  })
+})
